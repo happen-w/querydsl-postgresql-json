@@ -19,7 +19,7 @@ public class InitData {
     public static void main(String[] args) {
         StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .applySetting("hibernate.connection.driver_class", "org.postgresql.Driver")
-                .applySetting("hibernate.connection.url", "jdbc:postgresql://localhost:5432/library")
+                .applySetting("hibernate.connection.url", "jdbc:postgresql://localhost:5432/postgres")
                 .applySetting("hibernate.connection.username", "postgres")
                 .applySetting("hibernate.connection.password", "postgres")
                 .applySetting("hibernate.dialect", "com.github.happen.dialect.CustomPostgreSQLDialect")

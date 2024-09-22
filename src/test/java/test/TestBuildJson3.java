@@ -1,6 +1,7 @@
 package test;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringTemplate;
 import com.querydsl.jpa.impl.JPAQuery;
 import entity.Book;
@@ -13,26 +14,21 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 
 import java.util.List;
 
-import static com.github.happen.dialect.CustomExpressions.jsonBuildTemplate;
-import static com.github.happen.dialect.CustomExpressions.jsonbAggTemplate;
 
-/**
- * Author: Happen
- * Date: 2024/7/8 11:28
- **/
-public class TestBuildJson2 {
+public class TestBuildJson3 {
 
-    // 第二种可以指定只需要的条件和创建别名
+    // 最开始的写法
     public static void main(String[] args) {
         StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .applySetting("hibernate.connection.driver_class", "org.postgresql.Driver")
                 .applySetting("hibernate.connection.url", "jdbc:postgresql://localhost:5432/postgres")
                 .applySetting("hibernate.connection.username", "postgres")
                 .applySetting("hibernate.connection.password", "postgres")
-                .applySetting("hibernate.dialect", "com.github.happen.dialect.CustomPostgreSQLDialect")
+                .applySetting("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
                 .applySetting("hibernate.show_sql", true)
                 .build();
         SessionFactory sessionFactory = new MetadataSources(registry)
@@ -44,12 +40,11 @@ public class TestBuildJson2 {
         Session entityManager = sessionFactory.openSession();
         Transaction transaction = entityManager.beginTransaction();
 
+        String template = String.format("CAST(json_object_agg({0}) as text)");
+        StringTemplate tp = Expressions.stringTemplate(template, QBook.book);
 
-
-        // 整个类
-        StringTemplate book = jsonbAggTemplate(jsonBuildTemplate(QBook.book.title.as("标题"), QBook.book.author));
         JPAQuery<Tuple> query = new JPAQuery<>(entityManager)
-                .select(QLibrary.library, book)
+                .select(QLibrary.library, tp)
                 .from(QLibrary.library)
                 .leftJoin(QBook.book)
                 .on(QLibrary.library.eq(QBook.book.library))
@@ -61,9 +56,10 @@ public class TestBuildJson2 {
         for (Tuple tuple : fetch) {
             System.out.println("=============");
             System.out.println(tuple.get(QLibrary.library));
-            System.out.println(tuple.get(book));
+            System.out.println(tuple.get(tp));
             System.out.println("=============");
         }
+
         transaction.commit();
         entityManager.close();
         sessionFactory.close();
